@@ -33,6 +33,8 @@ namespace JGR.SystemVerifier
 			this.proStatus = new System.Windows.Forms.ProgressBar();
 			this.tabs = new System.Windows.Forms.TabControl();
 			this.tabConfig = new System.Windows.Forms.TabPage();
+			this.grpPlugin = new System.Windows.Forms.GroupBox();
+			this.lblPluginName = new System.Windows.Forms.Label();
 			this.lblPluginDesc = new System.Windows.Forms.Label();
 			this.trePlugins = new System.Windows.Forms.TreeView();
 			this.tabResults = new System.Windows.Forms.TabPage();
@@ -45,8 +47,6 @@ namespace JGR.SystemVerifier
 			this.btnStop = new System.Windows.Forms.Button();
 			this.imlPlugins = new System.Windows.Forms.ImageList(this.components);
 			this.lblStatus = new System.Windows.Forms.Label();
-			this.lblPluginName = new System.Windows.Forms.Label();
-			this.grpPlugin = new System.Windows.Forms.GroupBox();
 			label1 = new System.Windows.Forms.Label();
 			this.tabs.SuspendLayout();
 			this.tabConfig.SuspendLayout();
@@ -134,6 +134,27 @@ namespace JGR.SystemVerifier
 			this.tabConfig.Text = "Configuration";
 			this.tabConfig.UseVisualStyleBackColor = true;
 			// 
+			// grpPlugin
+			// 
+			this.grpPlugin.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+						| System.Windows.Forms.AnchorStyles.Right)));
+			this.grpPlugin.Location = new System.Drawing.Point(322, 87);
+			this.grpPlugin.Name = "grpPlugin";
+			this.grpPlugin.Size = new System.Drawing.Size(224, 192);
+			this.grpPlugin.TabIndex = 3;
+			this.grpPlugin.TabStop = false;
+			this.grpPlugin.Text = "Plugin Options";
+			// 
+			// lblPluginName
+			// 
+			this.lblPluginName.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.lblPluginName.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+			this.lblPluginName.Location = new System.Drawing.Point(319, 6);
+			this.lblPluginName.Name = "lblPluginName";
+			this.lblPluginName.Size = new System.Drawing.Size(227, 13);
+			this.lblPluginName.TabIndex = 2;
+			this.lblPluginName.Text = "<no plugin selected>";
+			// 
 			// lblPluginDesc
 			// 
 			this.lblPluginDesc.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -149,6 +170,7 @@ namespace JGR.SystemVerifier
 						| System.Windows.Forms.AnchorStyles.Left)
 						| System.Windows.Forms.AnchorStyles.Right)));
 			this.trePlugins.CheckBoxes = true;
+			this.trePlugins.HideSelection = false;
 			this.trePlugins.Location = new System.Drawing.Point(6, 6);
 			this.trePlugins.Name = "trePlugins";
 			this.trePlugins.ShowLines = false;
@@ -200,6 +222,7 @@ namespace JGR.SystemVerifier
             this.colResultsDesc});
 			this.lstResults.FullRowSelect = true;
 			this.lstResults.HeaderStyle = System.Windows.Forms.ColumnHeaderStyle.Nonclickable;
+			this.lstResults.HideSelection = false;
 			this.lstResults.Location = new System.Drawing.Point(6, 6);
 			this.lstResults.MultiSelect = false;
 			this.lstResults.Name = "lstResults";
@@ -255,27 +278,6 @@ namespace JGR.SystemVerifier
 			this.lblStatus.TabIndex = 10;
 			this.lblStatus.Text = "Starting...";
 			this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-			// 
-			// lblPluginName
-			// 
-			this.lblPluginName.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.lblPluginName.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-			this.lblPluginName.Location = new System.Drawing.Point(319, 6);
-			this.lblPluginName.Name = "lblPluginName";
-			this.lblPluginName.Size = new System.Drawing.Size(227, 13);
-			this.lblPluginName.TabIndex = 2;
-			this.lblPluginName.Text = "<no plugin selected>";
-			// 
-			// grpPlugin
-			// 
-			this.grpPlugin.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-						| System.Windows.Forms.AnchorStyles.Right)));
-			this.grpPlugin.Location = new System.Drawing.Point(322, 87);
-			this.grpPlugin.Name = "grpPlugin";
-			this.grpPlugin.Size = new System.Drawing.Size(224, 192);
-			this.grpPlugin.TabIndex = 3;
-			this.grpPlugin.TabStop = false;
-			this.grpPlugin.Text = "Plugin Options";
 			// 
 			// VerifierGUI
 			// 
