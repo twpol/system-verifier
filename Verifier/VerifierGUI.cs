@@ -18,7 +18,7 @@ namespace JGR.SystemVerifier
 		}
 
 		PluginFinder pfinder;
-		Dictionary<string, IPlugin> plugins;
+		Dictionary<string, KeyValuePair<Type, IPlugin>> plugins;
 		Scanner scanner;
 
 		private void VerifierGUI_Load(object sender, EventArgs e) {
@@ -27,7 +27,7 @@ namespace JGR.SystemVerifier
 			pfinder.OnIsPluginTrusted += new PluginFinder.IsPluginTrustedEventHandler(pfinder_OnIsPluginTrusted);
 			pfinder.OnPluginFound += new PluginFinder.PluginFoundEventHandler(pfinder_OnPluginFound);
 			pfinder.OnStop += new EventHandler(pfinder_OnStop);
-			plugins = new Dictionary<string, IPlugin>();
+			plugins = new Dictionary<string, KeyValuePair<Type, IPlugin>>();
 
 			pfinder.Start();
 		}
@@ -60,7 +60,7 @@ namespace JGR.SystemVerifier
 			} else {
 				ConstructorInfo pluginCtor = e.type.GetConstructor(new Type[] { });
 				IPlugin plugin = (IPlugin)pluginCtor.Invoke(new object[] { });
-				plugins.Add(e.type.AssemblyQualifiedName, plugin);
+				plugins.Add(e.type.AssemblyQualifiedName, new KeyValuePair<Type, IPlugin>(e.type, plugin));
 				TreeNode node = trePlugins.Nodes.Add(plugin.Name);
 				node.Tag = e.type.AssemblyQualifiedName;
 				node.Checked = true;
@@ -82,7 +82,7 @@ namespace JGR.SystemVerifier
 		}
 
 		private void trePlugins_AfterSelect(object sender, TreeViewEventArgs e) {
-			IPlugin plugin = plugins[(string)e.Node.Tag];
+			IPlugin plugin = plugins[(string)e.Node.Tag].Value;
 			lblPluginName.Text = plugin.Name;
 			lblPluginDesc.Text = plugin.Description;
 			string authors = "";
@@ -110,12 +110,20 @@ namespace JGR.SystemVerifier
 			btnStop.Enabled = true;
 
 			lstResults.Items.Clear();
+			lblResultsName.Text = "";
+			lblResultsDescription.Text = "";
 
 			scanner = new Scanner();
 			scanner.OnProgress += new Scanner.ProgressEventHandler(scanner_Progress);
 			scanner.OnOutput += new Scanner.OutputEventHandler(scanner_Output);
 			scanner.OnComplete += new EventHandler(scanner_Complete);
-			//scanner.Modules.Add(new Test());
+			foreach (TreeNode node in trePlugins.Nodes) {
+				if (node.Checked) {
+					ConstructorInfo pluginCtor = plugins[(string)node.Tag].Key.GetConstructor(new Type[] { });
+					IPlugin plugin = (IPlugin)pluginCtor.Invoke(new object[] { });
+					scanner.Plugins.Add(plugin);
+				}
+			}
 			scanner.Start();
 		}
 
