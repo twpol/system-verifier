@@ -63,6 +63,7 @@ namespace JGR.SystemVerifier
 				plugins.Add(e.type.AssemblyQualifiedName, plugin);
 				TreeNode node = trePlugins.Nodes.Add(plugin.Name);
 				node.Tag = e.type.AssemblyQualifiedName;
+				node.Checked = true;
 				node.Expand();
 
 				if (trePlugins.SelectedNode == null) trePlugins.SelectedNode = node;
