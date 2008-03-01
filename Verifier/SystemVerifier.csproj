@@ -10,7 +10,7 @@
     <RootNamespace>JGR.SystemVerifier</RootNamespace>
     <AssemblyName>SystemVerifier</AssemblyName>
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>Signing.pfx</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>Signing.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -74,7 +74,7 @@
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Include="Signing.pfx" />
+    <None Include="Signing.snk" />
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
