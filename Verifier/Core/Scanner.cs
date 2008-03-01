@@ -9,11 +9,11 @@ namespace JGR.SystemVerifier.Core
 	class Scanner
 	{
 		Thread thread;
-		//List<IScanModule> modules;
+		List<IPlugin> plugins;
 
 		public Scanner() {
 			thread = new Thread(this.ThreadProc);
-			//modules = new List<IScanModule>();
+			plugins = new List<IPlugin>();
 		}
 
 		public void Start() {
@@ -25,26 +25,30 @@ namespace JGR.SystemVerifier.Core
 			if (OnComplete != null) OnComplete(this, new EventArgs());
 		}
 
-		//public List<IScanModule> Modules {
-		//	get {
-		//		return modules;
-		//	}
-		//}
+		public List<IPlugin> Plugins {
+			get {
+				return plugins;
+			}
+		}
 
 		void ThreadProc() {
 			// This is the scanner's thread. It performs all the work.
 
-			// Step 1: Collect the scanners from the modules.
+			// Step 1: Collect the scanners from the plugins.
 			List<IScanner> scanners = new List<IScanner>();
-			//foreach (IScanModule module in modules) {
-			//	scanners.AddRange(module.Scanners);
-			//}
+			foreach (IPlugin plugin in plugins) {
+				if (plugin is IScanner) {
+					scanners.Add(plugin as IScanner);
+				}
+			}
 
-			// Step 2: Collect the displayers from the modules.
+			// Step 2: Collect the displayers from the plugins.
 			List<IDisplay> displays = new List<IDisplay>();
-			//foreach (IScanModule module in modules) {
-			//	displays.AddRange(module.Displays);
-			//}
+			foreach (IPlugin plugin in plugins) {
+				if (plugin is IDisplay) {
+					displays.Add(plugin as IDisplay);
+				}
+			}
 
 			// Step 3: Set up initial progress values.
 			// Add 1 to the maximum returned from each scanner so we can do
