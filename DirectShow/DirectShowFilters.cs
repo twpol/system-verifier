@@ -6,7 +6,7 @@ using JGR.SystemVerifier.Plugins;
 
 namespace DirectShow
 {
-	public class DirectShowFilters : IPlugin, IScanner, IDisplay
+	public class DirectShowFilters : IPlugin, IPluginWithHost, IPluginWithSections, IScanner, IDisplay
 	{
 		#region IPlugin Members
 
@@ -23,11 +23,34 @@ namespace DirectShow
 		}
 
 		#endregion
+		#region IPluginWithHost Members
+
+		private IPluginHost host;
+
+		public void Init(IPluginHost host) {
+			this.host = host;
+		}
+
+		#endregion
+		#region IPluginWithSections Members
+
+		public List<KeyValuePair<string, long>> Sections {
+			get {
+				List<KeyValuePair<string, long>> rv = new List<KeyValuePair<string,long >>();
+				rv.Add(new KeyValuePair<string, long>(@"Extension Registration", 1));
+				return rv;
+			}
+		}
+
+		public void SetSections(List<long> sections) {
+			throw new Exception("The method or operation is not implemented.");
+		}
+
+		#endregion
 		#region IScanner Members
 
 		private long current = 0;
 		private long maximum = 0;
-		private int state = 0;
 		private Queue<DirectShowExtension> extensions;
 
 		public long Current {
@@ -42,26 +65,25 @@ namespace DirectShow
 			}
 		}
 
-		public List<IScanItem> Process() {
-			if (state == 0) {
-				extensions = new Queue<DirectShowExtension>();
+		public void PreProcess() {
+			extensions = new Queue<DirectShowExtension>();
 
-				using (RegistryKey key = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(@"Media Type\Extensions")) {
-					foreach (string extensionName in key.GetSubKeyNames()) {
-						using (RegistryKey extensionKey = key.OpenSubKey(extensionName)) {
-							object sourceFilter = extensionKey.GetValue("Source Filter", null);
-							if (sourceFilter != null) {
-								extensions.Enqueue(new DirectShowExtension(extensionName, sourceFilter.ToString()));
-							}
+			using (RegistryKey key = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(@"Media Type\Extensions")) {
+				foreach (string extensionName in key.GetSubKeyNames()) {
+					using (RegistryKey extensionKey = key.OpenSubKey(extensionName)) {
+						object sourceFilter = extensionKey.GetValue("Source Filter", null);
+						if (sourceFilter != null) {
+							extensions.Enqueue(new DirectShowExtension(extensionName, sourceFilter.ToString()));
 						}
 					}
 				}
-				maximum += extensions.Count;
-				current++;
-				state++;
-				return null;
 			}
 
+			maximum = extensions.Count;
+			current = 0;
+		}
+
+		public List<IScanItem> Process() {
 			List<IScanItem> rv = new List<IScanItem>();
 			DirectShowExtension extension = extensions.Dequeue();
 			DefaultScanItem item;
@@ -74,19 +96,21 @@ namespace DirectShow
 							item = new DefaultScanItem("DirectShowFilter");
 							item.Properties["Extension"] = extension.Extension;
 							item.Properties["ClassID"] = extension.SourceFilter;
-							item.Properties["Bitness"] = "64bit";
+							item.Properties["Bitness"] = host.Bitness + "bit";
 							item.Properties["ItemIssue"] = "Unregistered";
 							rv.Add(item);
 						}
 					}
-					using (RegistryKey filterKey = key.OpenSubKey(@"Wow6432Node\CLSID\" + extension.SourceFilter)) {
-						if (filterKey == null) {
-							item = new DefaultScanItem("DirectShowFilter");
-							item.Properties["Extension"] = extension.Extension;
-							item.Properties["ClassID"] = extension.SourceFilter;
-							item.Properties["Bitness"] = "32bit";
-							item.Properties["ItemIssue"] = "Unregistered";
-							rv.Add(item);
+					if (host.Bitness > 32) {
+						using (RegistryKey filterKey = key.OpenSubKey(@"Wow6432Node\CLSID\" + extension.SourceFilter)) {
+							if (filterKey == null) {
+								item = new DefaultScanItem("DirectShowFilter");
+								item.Properties["Extension"] = extension.Extension;
+								item.Properties["ClassID"] = extension.SourceFilter;
+								item.Properties["Bitness"] = "32bit";
+								item.Properties["ItemIssue"] = "Unregistered";
+								rv.Add(item);
+							}
 						}
 					}
 				}
@@ -99,6 +123,9 @@ namespace DirectShow
 			}
 
 			return rv;
+		}
+
+		public void PostProcess() {
 		}
 
 		#endregion
