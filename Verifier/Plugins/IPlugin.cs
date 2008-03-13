@@ -10,4 +10,15 @@ namespace JGR.SystemVerifier.Plugins
 		string Description { get; }
 		string[] Authors { get; }
 	}
+
+	public interface IPluginWithHost
+	{
+		void Init(IPluginHost host);
+	}
+
+	public interface IPluginWithSections
+	{
+		List<KeyValuePair<string, long>> Sections { get; }
+		void SetSections(List<long> sections);
+	}
 }

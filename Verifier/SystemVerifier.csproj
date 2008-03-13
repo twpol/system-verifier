@@ -46,6 +46,7 @@
     <Compile Include="Plugins\DefaultDisplay.cs" />
     <Compile Include="Plugins\DefaultRegistryDisplay.cs" />
     <Compile Include="Plugins\IPlugin.cs" />
+    <Compile Include="Plugins\IPluginHost.cs" />
     <Compile Include="Plugins\IScanItem.cs" />
     <Compile Include="Plugins\IScanner.cs" />
     <Compile Include="VerifierGUI.cs">

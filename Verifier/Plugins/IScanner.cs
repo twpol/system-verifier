@@ -7,6 +7,8 @@ namespace JGR.SystemVerifier.Plugins
 	{
 		long Current { get; }
 		long Maximum { get; }
+		void PreProcess();
 		List<IScanItem> Process();
+		void PostProcess();
 	}
 }

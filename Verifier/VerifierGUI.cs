@@ -11,7 +11,7 @@ using System.Reflection;
 
 namespace JGR.SystemVerifier
 {
-	public partial class VerifierGUI : Form
+	public partial class VerifierGUI : Form, IPluginHost
 	{
 		public VerifierGUI() {
 			InitializeComponent();
@@ -60,13 +60,50 @@ namespace JGR.SystemVerifier
 			} else {
 				ConstructorInfo pluginCtor = e.type.GetConstructor(new Type[] { });
 				IPlugin plugin = (IPlugin)pluginCtor.Invoke(new object[] { });
+				if (plugin is IPluginWithHost) {
+					(plugin as IPluginWithHost).Init(this);
+				}
 				plugins.Add(e.type.AssemblyQualifiedName, new KeyValuePair<Type, IPlugin>(e.type, plugin));
+				
 				TreeNode node = trePlugins.Nodes.Add(plugin.Name);
 				node.Tag = e.type.AssemblyQualifiedName;
 				node.Checked = true;
-				node.Expand();
+
+				if (plugin is IPluginWithSections) {
+					List<KeyValuePair<string, long>> sections = (plugin as IPluginWithSections).Sections;
+					foreach (KeyValuePair<string, long> section in sections) {
+						ForceTreeEntry(node, section.Key, section.Value);
+					}
+				}
 
 				if (trePlugins.SelectedNode == null) trePlugins.SelectedNode = node;
+			}
+		}
+
+		void ForceTreeEntry(TreeNode root, string path, object tag) {
+			string[] pathLevels = path.Split('\\');
+
+			TreeNode node = null;
+			foreach (TreeNode child in root.Nodes) {
+				if (child.Text == pathLevels[0]) {
+					if (pathLevels.Length == 1) {
+						return;
+					}
+					node = child;
+					break;
+				}
+			}
+
+			if (node == null) {
+				node = root.Nodes.Add(pathLevels[0]);
+				if (pathLevels.Length == 1) {
+					node.Tag = tag;
+				}
+				node.Checked = true;
+			}
+
+			if (pathLevels.Length > 1) {
+				ForceTreeEntry(node, String.Join("\\", pathLevels, 1, pathLevels.Length - 1), tag);
 			}
 		}
 
@@ -75,6 +112,7 @@ namespace JGR.SystemVerifier
 				lblStatus.Invoke(new EventHandler(pfinder_OnStop), new object[] { sender, e });
 			} else {
 				lblStatus.Visible = false;
+				trePlugins.ExpandAll();
 				//if (pfinder.Plugins.Count > 0) {
 				btnStart.Enabled = true;
 				//}
@@ -82,15 +120,25 @@ namespace JGR.SystemVerifier
 		}
 
 		private void trePlugins_AfterSelect(object sender, TreeViewEventArgs e) {
-			IPlugin plugin = plugins[(string)e.Node.Tag].Value;
+			// Find the "root" node so that we know which plugin it is for, as
+			// other nodes are tagged with section IDs.
+			TreeNode rootNode = e.Node;
+			while (rootNode.Parent != null) {
+				rootNode = rootNode.Parent;
+			}
+
+			// Pull the plugin out of the collection using the Tag (name).
+			IPlugin plugin = plugins[(string)rootNode.Tag].Value;
+
 			lblPluginName.Text = plugin.Name;
 			lblPluginDesc.Text = plugin.Description;
-			string authors = "";
-			foreach (string author in plugin.Authors) {
-				if (authors != "") authors += ", ";
-				authors += author;
+			lblPluginAuthors.Text = String.Join(", ", plugin.Authors);
+		}
+
+		private void trePlugins_AfterCheck(object sender, TreeViewEventArgs e) {
+			foreach (TreeNode child in e.Node.Nodes) {
+				child.Checked = e.Node.Checked;
 			}
-			lblPluginAuthors.Text = authors;
 		}
 
 		private void btnClose_Click(object sender, EventArgs e) {
@@ -121,6 +169,9 @@ namespace JGR.SystemVerifier
 				if (node.Checked) {
 					ConstructorInfo pluginCtor = plugins[(string)node.Tag].Key.GetConstructor(new Type[] { });
 					IPlugin plugin = (IPlugin)pluginCtor.Invoke(new object[] { });
+					if (plugin is IPluginWithHost) {
+						(plugin as IPluginWithHost).Init(this);
+					}
 					scanner.Plugins.Add(plugin);
 				}
 			}
@@ -169,5 +220,33 @@ namespace JGR.SystemVerifier
 				lblResultsDescription.Text = "";
 			}
 		}
+
+		#region IPluginHost Members
+
+		public string OS {
+			get {
+				return "Windows";
+			}
+		}
+
+		public long OSMinor {
+			get {
+				return Environment.OSVersion.Version.Minor;
+			}
+		}
+
+		public long OSMajor {
+			get {
+				return Environment.OSVersion.Version.Major;
+			}
+		}
+
+		public long Bitness {
+			get {
+				return 8 * IntPtr.Size;
+			}
+		}
+
+		#endregion
 	}
 }
