@@ -178,6 +178,7 @@ namespace JGR.SystemVerifier
 			this.trePlugins.ShowRootLines = false;
 			this.trePlugins.Size = new System.Drawing.Size(307, 273);
 			this.trePlugins.TabIndex = 0;
+			this.trePlugins.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.trePlugins_AfterCheck);
 			this.trePlugins.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.trePlugins_AfterSelect);
 			// 
 			// tabResults
@@ -318,13 +319,13 @@ namespace JGR.SystemVerifier
 		private System.Windows.Forms.Label lblResultsDescription;
 		private System.Windows.Forms.Label lblResultsName;
 		private System.Windows.Forms.ImageList imlResults;
-		private System.Windows.Forms.TreeView trePlugins;
 		private System.Windows.Forms.ImageList imlPlugins;
 		private System.Windows.Forms.Label lblStatus;
 		private System.Windows.Forms.Label lblPluginDesc;
 		private System.Windows.Forms.Label lblPluginAuthors;
 		private System.Windows.Forms.Label lblPluginName;
 		private System.Windows.Forms.GroupBox grpPlugin;
+		private System.Windows.Forms.TreeView trePlugins;
 	}
 }
 

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace JGR.SystemVerifier.Plugins
 {
-	public class DisplayDisplay : IDisplay
+	public class DefaultDisplay : IDisplay
 	{
 		#region IDisplay Members
 

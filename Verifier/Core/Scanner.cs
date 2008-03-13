@@ -49,6 +49,7 @@ namespace JGR.SystemVerifier.Core
 					displays.Add(plugin as IDisplay);
 				}
 			}
+			displays.Add(new DefaultDisplay());
 
 			// Step 3: Set up initial progress values.
 			// Add 1 to the maximum returned from each scanner so we can do
@@ -56,14 +57,15 @@ namespace JGR.SystemVerifier.Core
 			// know how many steps it'll take yet.
 			long maximum = 0;
 			foreach (IScanner scanner in scanners) {
-				maximum += scanner.Maximum + 1;
+				scanner.PreProcess();
+				maximum += scanner.Maximum;
 			}
 
 			long current = 0;
 			if (OnProgress != null) OnProgress(this, new ProgressEventArgs(maximum, current));
 
 			foreach (IScanner scanner in scanners) {
-				while (scanner.Current <= scanner.Maximum) {
+				while (scanner.Current < scanner.Maximum) {
 					//OnOutput(this, new OutputEventArgs(new DisplayItem(DisplayItemSeverity.Verbose, "Process Before", "Current: " + current + "  Maximum: " + maximum)));
 					maximum -= scanner.Maximum;
 					current -= scanner.Current;
@@ -87,6 +89,10 @@ namespace JGR.SystemVerifier.Core
 
 					if (OnProgress != null) OnProgress(this, new ProgressEventArgs(maximum, current));
 				}
+			}
+
+			foreach (IScanner scanner in scanners) {
+				scanner.PostProcess();
 			}
 
 			if (OnProgress != null) OnProgress(this, new ProgressEventArgs(maximum, current));
