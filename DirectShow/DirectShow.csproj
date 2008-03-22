@@ -7,7 +7,7 @@
     <ProjectGuid>{E9F91BE9-A37E-401F-9946-B95CA24F7007}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>JGR.SystemVerifier.Plugin.DirectShow</RootNamespace>
+    <RootNamespace>DirectShow</RootNamespace>
     <AssemblyName>DirectShow</AssemblyName>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>Signing.snk</AssemblyOriginatorKeyFile>

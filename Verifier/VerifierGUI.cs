@@ -172,10 +172,24 @@ namespace JGR.SystemVerifier
 					if (plugin is IPluginWithHost) {
 						(plugin as IPluginWithHost).Init(this);
 					}
+					if (plugin is IPluginWithSections) {
+						List<long> sections = new List<long>();
+						CollectSections(ref sections, node);
+						(plugin as IPluginWithSections).SetSections(sections);
+					}
 					scanner.Plugins.Add(plugin);
 				}
 			}
 			scanner.Start();
+		}
+
+		void CollectSections(ref List<long> sections, TreeNode root) {
+			foreach (TreeNode child in root.Nodes) {
+				if (child.Checked) {
+					sections.Add((long)child.Tag);
+				}
+				CollectSections(ref sections, child);
+			}
 		}
 
 		void scanner_Progress(object sender, Scanner.ProgressEventArgs e) {
