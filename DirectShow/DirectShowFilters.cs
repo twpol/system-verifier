@@ -34,16 +34,24 @@ namespace DirectShow
 		#endregion
 		#region IPluginWithSections Members
 
+		enum SectionsEnum : long {
+			ExtensionRegistration
+		}
+
+		Dictionary<long, bool> sectionsEnabled = new Dictionary<long, bool>(Enum.GetNames(typeof(SectionsEnum)).Length);
+
 		public List<KeyValuePair<string, long>> Sections {
 			get {
 				List<KeyValuePair<string, long>> rv = new List<KeyValuePair<string,long >>();
-				rv.Add(new KeyValuePair<string, long>(@"Extension Registration", 1));
+				rv.Add(new KeyValuePair<string, long>(@"Extension Registration", (long)SectionsEnum.ExtensionRegistration));
 				return rv;
 			}
 		}
 
 		public void SetSections(List<long> sections) {
-			throw new Exception("The method or operation is not implemented.");
+			foreach (long section in Enum.GetValues(typeof(SectionsEnum))) {
+				sectionsEnabled[section] = sections.Contains(section);
+			}
 		}
 
 		#endregion
@@ -68,12 +76,14 @@ namespace DirectShow
 		public void PreProcess() {
 			extensions = new Queue<DirectShowExtension>();
 
-			using (RegistryKey key = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(@"Media Type\Extensions")) {
-				foreach (string extensionName in key.GetSubKeyNames()) {
-					using (RegistryKey extensionKey = key.OpenSubKey(extensionName)) {
-						object sourceFilter = extensionKey.GetValue("Source Filter", null);
-						if (sourceFilter != null) {
-							extensions.Enqueue(new DirectShowExtension(extensionName, sourceFilter.ToString()));
+			if (sectionsEnabled[(long)SectionsEnum.ExtensionRegistration]) {
+				using (RegistryKey key = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(@"Media Type\Extensions")) {
+					foreach (string extensionName in key.GetSubKeyNames()) {
+						using (RegistryKey extensionKey = key.OpenSubKey(extensionName)) {
+							object sourceFilter = extensionKey.GetValue("Source Filter", null);
+							if (sourceFilter != null) {
+								extensions.Enqueue(new DirectShowExtension(extensionName, sourceFilter.ToString()));
+							}
 						}
 					}
 				}
