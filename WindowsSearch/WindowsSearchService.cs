@@ -90,10 +90,9 @@ namespace WindowsSearch
 			{
 				string persistHandler = GetPersistentHandler(extension);
 				string iFilterClass = GetIFilterFromPersistentHandler(persistHandler);
-				string library = GetDefaultValueFromKey(@"SOFTWARE\Classes\CLSID\" + iFilterClass + @"\InProcServer32");
 				if (iFilterClass != "") {
 					item = new DefaultScanItem(extension);
-					item.Properties["Description"] = "PH: " + library + " / " + GetClassIDName(iFilterClass) + " / " + persistHandler;
+					item.Properties["Description"] = GetNameFromClassID(iFilterClass); // + " (Persistent Handler)";
 					rv.Add(item);
 					return;
 				}
@@ -103,10 +102,9 @@ namespace WindowsSearch
 				string classID = GetValueFromKey(@"SOFTWARE\Classes\MIME\Database\Content Type\" + contentType, "CLSID");
 				string persistHandler = GetPersistentHandler(classID);
 				string iFilterClass = GetIFilterFromPersistentHandler(persistHandler);
-				string library = GetDefaultValueFromKey(@"SOFTWARE\Classes\CLSID\" + iFilterClass + @"\InProcServer32");
 				if (iFilterClass != "") {
 					item = new DefaultScanItem(extension);
-					item.Properties["Description"] = "CT: " + library + " / " + GetClassIDName(iFilterClass) + " / " + GetClassIDName(persistHandler) + " / " + GetClassIDName(classID) + " / " + contentType;
+					item.Properties["Description"] = GetNameFromClassID(iFilterClass); // + " (Content Type)";
 					rv.Add(item);
 					return;
 				}
@@ -116,14 +114,17 @@ namespace WindowsSearch
 				string classID = GetDefaultValueFromKey(@"SOFTWARE\Classes\" + handlerName + @"\CLSID");
 				string persistHandler = GetPersistentHandler(classID);
 				string iFilterClass = GetIFilterFromPersistentHandler(persistHandler);
-				string library = GetDefaultValueFromKey(@"SOFTWARE\Classes\CLSID\" + iFilterClass + @"\InProcServer32");
 				if (iFilterClass != "") {
 					item = new DefaultScanItem(extension);
-					item.Properties["Description"] = "DT: " + library + " / " + GetClassIDName(iFilterClass) + " / " + GetClassIDName(persistHandler) + " / " + GetClassIDName(classID) + " / " + handlerName;
+					item.Properties["Description"] = GetNameFromClassID(iFilterClass); // +" (Document Type)";
 					rv.Add(item);
 					return;
 				}
 			}
+
+			item = new DefaultScanItem(extension);
+			item.Properties["Description"] = "File Properties Filter"; // + " (Document Type)";
+			rv.Add(item);
 		}
 
 		string GetDefaultValueFromKey(string keyName) {
@@ -146,8 +147,11 @@ namespace WindowsSearch
 			}
 		}
 
-		string GetClassIDName(string classID) {
+		string GetNameFromClassID(string classID) {
 			string name = GetDefaultValueFromKey(@"SOFTWARE\Classes\CLSID\" + classID);
+			if (name == "") {
+				name = GetDefaultValueFromKey(@"SOFTWARE\Classes\CLSID\" + classID + @"\InProcServer32");
+			}
 			if (name == "") {
 				return classID;
 			}
