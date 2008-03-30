@@ -13,10 +13,14 @@ namespace JGR.SystemVerifier.Plugins
 		}
 
 		public IDisplayItem Process(IScanItem item) {
-			if (item.Properties.ContainsKey("Description")) {
-				return new DefaultDisplayItem(DisplayItemSeverity.Critical, item.Type, item.Properties["Description"].ToString());
+			DisplayItemSeverity severity = DisplayItemSeverity.Critical;
+			if (item.Properties.ContainsKey("Severity")) {
+				severity = (DisplayItemSeverity)Enum.Parse(typeof(DisplayItemSeverity), item.Properties["Severity"].ToString());
 			}
-			return new DefaultDisplayItem(DisplayItemSeverity.Critical, item.Type, "");
+			if (item.Properties.ContainsKey("Description")) {
+				return new DefaultDisplayItem(severity, item.Type, item.Properties["Description"].ToString());
+			}
+			return new DefaultDisplayItem(severity, item.Type, "");
 		}
 
 		#endregion
