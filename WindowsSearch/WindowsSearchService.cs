@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Security;
 using Microsoft.Win32;
 using JGR.SystemVerifier.Plugins;
 
@@ -36,8 +37,8 @@ namespace WindowsSearch
 
 		private long current = 0;
 		private long maximum = 0;
-		private int state = 0;
 		private Queue<string> extensions;
+		private List<string> disabledExtensions;
 
 		public long Current {
 			get {
@@ -63,6 +64,18 @@ namespace WindowsSearch
 				}
 			}
 
+			disabledExtensions = new List<string>();
+
+			try {
+				using (RegistryKey key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows Search\Gather\Windows\SystemIndex\Extensions\ExtensionList")) {
+					foreach (string extensionIndex in key.GetValueNames()) {
+						disabledExtensions.Add("." + (string)key.GetValue(extensionIndex));
+					}
+				}
+			} catch (SecurityException) {
+				disabledExtensions = null;
+			}
+
 			maximum = extensions.Count;
 			current = 0;
 		}
@@ -73,26 +86,35 @@ namespace WindowsSearch
 			DefaultScanItem item;
 			current++;
 
-			ProcessExtensionFor(extension, rv);
-
-			if (false) {
-				item = new DefaultScanItem(extension);
-				item.Properties["Description"] = item.Type;
+			if ((current == 1) && (disabledExtensions == null)) {
+				item = new DefaultScanItem("Windows Search Service");
+				item.Properties["Severity"] = "Warning";
+				item.Properties["Description"] = "Administrator rights are required to read the enabled extension list.";
 				rv.Add(item);
 			}
+
+			ProcessExtensionFor(extension, rv);
 
 			return rv;
 		}
 
 		void ProcessExtensionFor(string extension, List<IScanItem> rv) {
 			DefaultScanItem item;
+			string prefix = "";
+			if (disabledExtensions != null) {
+				if (disabledExtensions.Contains(extension)) {
+					prefix = "[Off] ";
+				} else {
+					prefix = "[On] ";
+				}
+			}
 
 			{
 				string persistHandler = GetPersistentHandler(extension);
 				string iFilterClass = GetIFilterFromPersistentHandler(persistHandler);
 				if (iFilterClass != "") {
 					item = new DefaultScanItem(extension);
-					item.Properties["Description"] = GetNameFromClassID(iFilterClass); // + " (Persistent Handler)";
+					item.Properties["Description"] = prefix + GetNameFromClassID(iFilterClass) + " (Persistent Handler)";
 					rv.Add(item);
 					return;
 				}
@@ -104,7 +126,7 @@ namespace WindowsSearch
 				string iFilterClass = GetIFilterFromPersistentHandler(persistHandler);
 				if (iFilterClass != "") {
 					item = new DefaultScanItem(extension);
-					item.Properties["Description"] = GetNameFromClassID(iFilterClass); // + " (Content Type)";
+					item.Properties["Description"] = prefix + GetNameFromClassID(iFilterClass) + " (Content Type)";
 					rv.Add(item);
 					return;
 				}
@@ -116,14 +138,14 @@ namespace WindowsSearch
 				string iFilterClass = GetIFilterFromPersistentHandler(persistHandler);
 				if (iFilterClass != "") {
 					item = new DefaultScanItem(extension);
-					item.Properties["Description"] = GetNameFromClassID(iFilterClass); // +" (Document Type)";
+					item.Properties["Description"] = prefix + GetNameFromClassID(iFilterClass) +" (Document Type)";
 					rv.Add(item);
 					return;
 				}
 			}
 
 			item = new DefaultScanItem(extension);
-			item.Properties["Description"] = "File Properties Filter"; // + " (Document Type)";
+			item.Properties["Description"] = prefix + "File Properties Filter" + " (Default)";
 			rv.Add(item);
 		}
 
