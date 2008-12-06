@@ -10,5 +10,7 @@ namespace JGR.SystemVerifier.Plugins
 		long OSMinor { get; }
 		long OSMajor { get; }
 		long Bitness { get; }
+
+		Dictionary<string, uint> VerifyCOMClassID(string classID, List<string> interfaces, long bitness);
 	}
 }
