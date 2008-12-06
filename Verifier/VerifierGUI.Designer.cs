@@ -234,6 +234,7 @@ namespace JGR.SystemVerifier
 			this.lstResults.UseCompatibleStateImageBehavior = false;
 			this.lstResults.View = System.Windows.Forms.View.Details;
 			this.lstResults.SelectedIndexChanged += new System.EventHandler(this.lstResults_SelectedIndexChanged);
+			this.lstResults.KeyDown += new System.Windows.Forms.KeyEventHandler(this.lstResults_KeyDown);
 			// 
 			// colResultsName
 			// 

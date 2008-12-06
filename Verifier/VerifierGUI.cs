@@ -141,6 +141,34 @@ namespace JGR.SystemVerifier
 			}
 		}
 
+		private void lstResults_KeyDown(object sender, KeyEventArgs e) {
+			if ((e.Control && (e.KeyCode == Keys.C)) || (e.Control && (e.KeyCode == Keys.Insert))) {
+				List<string> dataCSV = new List<string>();
+				List<string> dataText = new List<string>();
+				{
+					List<string> row = new List<string>();
+					foreach (ColumnHeader col in lstResults.Columns) {
+						row.Add(col.Text);
+					}
+					dataCSV.Add(String.Join(",", row.ToArray()));
+				}
+				foreach (ListViewItem item in lstResults.Items) {
+					if (item.Selected) {
+						List<string> row = new List<string>();
+						foreach (ListViewItem.ListViewSubItem cell in item.SubItems) {
+							row.Add(cell.Text);
+						}
+						dataCSV.Add(String.Join(",", row.ToArray()));
+						dataText.Add(String.Join("\t", row.ToArray()));
+					}
+				}
+
+				Clipboard.Clear();
+				Clipboard.SetText(String.Join("\n", dataCSV.ToArray()), TextDataFormat.CommaSeparatedValue);
+				Clipboard.SetText(String.Join("\n", dataText.ToArray()), TextDataFormat.UnicodeText);
+			}
+		}
+
 		private void btnClose_Click(object sender, EventArgs e) {
 			if (btnStop.Enabled) {
 				btnStop_Click(sender, e);
