@@ -22,7 +22,7 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)\Verifier\bin\$(ConfigurationName)\Plugins"
-			IntermediateDirectory="$(SolutionDir)\Verifier\obj\$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)\obj\$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			>
@@ -97,7 +97,7 @@
 		<Configuration
 			Name="Debug|x64"
 			OutputDirectory="$(SolutionDir)\Verifier\bin\$(ConfigurationName)\Plugins"
-			IntermediateDirectory="$(SolutionDir)\Verifier\obj\$(ConfigurationName)"
+			IntermediateDirectory="$(ProjectDir)\obj\$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			>
@@ -172,8 +172,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)\Verifier\bin\Plugins\$(ConfigurationName)"
-			IntermediateDirectory="$(SolutionDir)\Verifier\obj\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)\Verifier\bin\$(ConfigurationName)\Plugins"
+			IntermediateDirectory="$(ProjectDir)\obj\$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -246,8 +246,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(SolutionDir)\Verifier\bin\$(ConfigurationName)\Plugins"
+			IntermediateDirectory="$(ProjectDir)\obj\$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
