@@ -8,6 +8,8 @@ using System.Windows.Forms;
 using JGR.SystemVerifier.Core;
 using JGR.SystemVerifier.Plugins;
 using System.Reflection;
+using System.Diagnostics;
+using System.Globalization;
 
 namespace JGR.SystemVerifier
 {
@@ -287,6 +289,49 @@ namespace JGR.SystemVerifier
 			get {
 				return 8 * IntPtr.Size;
 			}
+		}
+
+		public Dictionary<string, uint> VerifyCOMClassID(string classID, List<string> interfaces, long bitness) {
+			Debug.Assert((bitness == 32) || (bitness == 64));
+			Dictionary<string, uint> rv = new Dictionary<string, uint>();
+			rv["_exitcode"] = 0xFFFFFFFF;
+			Process comcheck = null;
+			string pluginPath = Application.ExecutablePath;
+			pluginPath = pluginPath.Substring(0, pluginPath.LastIndexOf(@"\")) + @"\Plugins";
+
+			string arguments = "/classid " + classID;
+			if (interfaces != null) {
+				arguments += " /interfaces " + String.Join(" ", interfaces.ToArray());
+			}
+
+			comcheck = new Process();
+			if (bitness == 32) {
+				comcheck.StartInfo.FileName = pluginPath + @"\COM Checker.Win32.exe";
+			} else if (bitness == 64) {
+				comcheck.StartInfo.FileName = pluginPath + @"\COM Checker.x64.exe";
+			}
+			comcheck.StartInfo.Arguments = arguments;
+			comcheck.StartInfo.UseShellExecute = false;
+			comcheck.StartInfo.CreateNoWindow = true;
+			comcheck.StartInfo.RedirectStandardInput = true;
+			comcheck.StartInfo.RedirectStandardOutput = true;
+			comcheck.StartInfo.RedirectStandardError = true;
+			comcheck.Start();
+
+			string line;
+			while ((line = comcheck.StandardOutput.ReadLine()) != null) {
+				if ((line.Length != 49) || (line[0] != '{') || (line[37] != '}') || (line[38] != ' ') || (line[39] != '0') || (line[40] != 'x')) {
+					continue;
+				}
+				string resultClass = line.Substring(0, 38);
+				uint resultCode = 0xFFFFFFFF;
+				uint.TryParse(line.Substring(41, 8), NumberStyles.HexNumber, null, out resultCode);
+				rv[resultClass] = resultCode;
+			}
+			comcheck.WaitForExit();
+			rv["_exitcode"] = (uint)comcheck.ExitCode;
+
+			return rv;
 		}
 
 		#endregion
