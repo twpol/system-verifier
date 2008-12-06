@@ -165,45 +165,48 @@ namespace WindowsSearch
 			}
 		}
 
-		List<IScanItem> VerifyFilterClassID(string extension, string classID) {
-			List<string> interfaces = new List<string>(new string[] {
+        List<IScanItem> VerifyFilterClassID(string extension, string classID) {
+            List<string> interfaces = new List<string>(new string[] {
                 "{89BCB740-6119-101A-BCB7-00DD010655AF}" // IFilter
             });
-			List<IScanItem> rv = new List<IScanItem>();
-			int[] bitnessList = new int[] { 32, 64 };
+            List<IScanItem> rv = new List<IScanItem>();
+            int[] bitnessList = new int[] { 32, 64 };
 
-			foreach (int bitness in bitnessList) {
-				Dictionary<string, uint> verify = host.VerifyCOMClassID(classID, interfaces, bitness);
-				if (verify["_exitcode"] != 0) {
-					IScanItem item = new DefaultScanItem(extension);
-					item.Properties["Description"] = "There was an error checking filter class " + FormatClassID(classID) + ". Error code: " + verify["_exitcode"].ToString("x");
-					rv.Add(item);
-				} else {
-					foreach (string intf in interfaces) {
-						if (!verify.ContainsKey(intf)) {
-							IScanItem item = new DefaultScanItem(extension);
-							item.Properties["Description"] = "There was an unexpected error checking filter class " + FormatClassID(classID) + " for interface " + FormatClassID(intf) + " for " + bitness + "bit applications.";
-							rv.Add(item);
-						} else if (verify[intf] != 0) {
-							IScanItem item = new DefaultScanItem(extension);
-							item.Properties["Description"] = "Filter class " + FormatClassID(classID) + " is not correctly registered for " + bitness + "bit applications. Error code for " + FormatClassID(intf) + ": " + verify[intf].ToString("x");
-							if (verify[intf] == 0x80070057) {
-								item.Properties["Description"] += " (E_INVALIDARG)";
-							} else if (verify[intf] == 0x80004002) {
-								item.Properties["Description"] += " (E_NOINTERFACE)";
-							} else if (verify[intf] == 0x80040154) {
-								item.Properties["Description"] += " (REGDB_E_CLASSNOTREG)";
-							} else if (verify[intf] == 0x80040155) {
-								item.Properties["Description"] += " (REGDB_E_IIDNOTREG)";
-							}
-							rv.Add(item);
-						}
-					}
-				}
-			}
+            foreach (int bitness in bitnessList) {
+                Dictionary<string, uint> verify = host.VerifyCOMClassID(classID, interfaces, bitness);
+                if (verify["_exitcode"] != 0) {
+                    IScanItem item = new DefaultScanItem(extension);
+                    item.Properties["Severity"] = "Critical";
+                    item.Properties["Description"] = "There was an unexpected error checking filter class " + FormatClassID(classID) + ". Error code: " + verify["_exitcode"].ToString("x");
+                    rv.Add(item);
+                } else {
+                    foreach (string intf in interfaces) {
+                        if (!verify.ContainsKey(intf)) {
+                            IScanItem item = new DefaultScanItem(extension);
+                            item.Properties["Severity"] = "Critical";
+                            item.Properties["Description"] = "There was an unexpected error checking filter class " + FormatClassID(classID) + " for interface " + FormatClassID(intf) + " for " + bitness + "bit applications.";
+                            rv.Add(item);
+                        } else if (verify[intf] != 0) {
+                            IScanItem item = new DefaultScanItem(extension);
+                            item.Properties["Severity"] = "Error";
+                            item.Properties["Description"] = "Filter class " + FormatClassID(classID) + " is not correctly registered for " + bitness + "bit applications. Error code for " + FormatClassID(intf) + ": " + verify[intf].ToString("x");
+                            if (verify[intf] == 0x80070057) {
+                                item.Properties["Description"] += " (E_INVALIDARG)";
+                            } else if (verify[intf] == 0x80004002) {
+                                item.Properties["Description"] += " (E_NOINTERFACE)";
+                            } else if (verify[intf] == 0x80040154) {
+                                item.Properties["Description"] += " (REGDB_E_CLASSNOTREG)";
+                            } else if (verify[intf] == 0x80040155) {
+                                item.Properties["Description"] += " (REGDB_E_IIDNOTREG)";
+                            }
+                            rv.Add(item);
+                        }
+                    }
+                }
+            }
 
-			return rv;
-		}
+            return rv;
+        }
 
         List<IScanItem> VerifyPropertyClassID(string extension, string classID, long bitness) {
             Dictionary<string, string> interfaces = new Dictionary<string, string>();
@@ -227,7 +230,8 @@ namespace WindowsSearch
             // Check for the entire verify failing for some reason (e.g. COM Checker is missing).
             if (verify["_exitcode"] != 0) {
                 IScanItem item = new DefaultScanItem(extension);
-                item.Properties["Description"] = "There was an error checking property handler class " + FormatClassID(classID) + ". Error code: " + FormatHResult(verify["_exitcode"]);
+                item.Properties["Severity"] = "Critical";
+                item.Properties["Description"] = "There was an unexpected error checking property handler class " + FormatClassID(classID) + ". Error code: " + FormatHResult(verify["_exitcode"]);
                 rv.Add(item);
                 return rv;
             }
@@ -246,6 +250,7 @@ namespace WindowsSearch
             // Check for unregistered classes specially.
             if (resultCodes["class"] == 0x80040154) {
                 IScanItem item = new DefaultScanItem(extension);
+                item.Properties["Severity"] = "Error";
                 item.Properties["Description"] = "Property handler class " + FormatClassID(classID) + " is not registered for " + bitness + "bit applications.";
                 rv.Add(item);
                 return rv;
@@ -254,6 +259,7 @@ namespace WindowsSearch
             // Other error with instanciating the class.
             if (resultCodes["class"] != 0x00000000) {
                 IScanItem item = new DefaultScanItem(extension);
+                item.Properties["Severity"] = "Error";
                 item.Properties["Description"] = "There was an error checking property handler class " + FormatClassID(classID) + ". Error code: " + FormatHResult(resultCodes["class"]);
                 rv.Add(item);
                 return rv;
@@ -263,11 +269,13 @@ namespace WindowsSearch
             foreach (KeyValuePair<string, string> intf in interfaces) {
                 if (!verify.ContainsKey(intf.Value)) {
                     IScanItem item = new DefaultScanItem(extension);
+                    item.Properties["Severity"] = "Critical";
                     item.Properties["Description"] = "There was an unexpected error checking property handler class " + FormatClassID(classID) + " for interface " + FormatClassID(intf.Value) + " for " + bitness + "bit applications.";
                     rv.Add(item);
                 }
                 if ((intf.Key != "class") && (resultCodes[intf.Key] != 0x00000000) && (resultCodes[intf.Key] != 0x80004002)) {
                     IScanItem item = new DefaultScanItem(extension);
+                    item.Properties["Severity"] = "Error";
                     item.Properties["Description"] = "Property handler class " + FormatClassID(classID) + " fails when QIed to '" + intf.Key + "' (" + FormatHResult(resultCodes[intf.Key]) + ") for " + bitness + "bit applications.";
                     rv.Add(item);
                 }
@@ -276,12 +284,14 @@ namespace WindowsSearch
             // All the verify work succeeded, check the class implements what it is supposed to.
             if (resultCodes["IPropertyStore"] != 0) {
                 IScanItem item = new DefaultScanItem(extension);
+                item.Properties["Severity"] = "Error";
                 item.Properties["Description"] = "Property handler class " + FormatClassID(classID) + " does not implement 'IPropertyStore' (" + FormatHResult(resultCodes["IPropertyStore"]) + ") for " + bitness + "bit applications.";
                 rv.Add(item);
             } else {
                 bool initOK = (resultCodes["IInitializeWithFile"] == 0) || (resultCodes["IInitializeWithItem"] == 0) || (resultCodes["IInitializeWithStream"] == 0);
                 if (!initOK) {
                     IScanItem item = new DefaultScanItem(extension);
+                    item.Properties["Severity"] = "Error";
                     item.Properties["Description"] = "Property handler class " + FormatClassID(classID) + " does not implement 'IShellExtInit', 'IInitializeWithFile', 'IInitializeWithItem' or 'IInitializeWithStream' for " + bitness + "bit applications.";
                     rv.Add(item);
                 }
