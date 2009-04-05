@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("JGR")]
 [assembly: AssemblyProduct("System Verifier")]
-[assembly: AssemblyCopyright("Copyright © JGR 2007, 2008")]
+[assembly: AssemblyCopyright("Copyright © JGR 2007, 2008, 2009")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

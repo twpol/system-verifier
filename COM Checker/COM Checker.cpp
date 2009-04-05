@@ -74,7 +74,7 @@ int main()
 	// We're done with the argument list.
 	LocalFree(szArgv);
 
-	// If we have no interfaces to check, just us IUnknown.
+	// If we have no interfaces to check, just use IUnknown.
 	if (intfList.size() == 0) {
 		intfList.push_back(IID_IUnknown);
 	}
@@ -108,7 +108,7 @@ int main()
 		objectIntf = NULL;
 
 		// Output a line of text of this format, with interface class ID and HRESULT:
-		//   {CLSID} 0x00000000
+		//   {IID} 0x00000000
 		LPOLESTR intfString;
 		StringFromIID(intfList[i], &intfString);
 		std::tstring output(50, 0);

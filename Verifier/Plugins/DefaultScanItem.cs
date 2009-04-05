@@ -14,6 +14,13 @@ namespace JGR.SystemVerifier.Plugins
 			this.properties = new Hashtable();
 		}
 
+		public DefaultScanItem(string type, DisplayItemSeverity severity, string description)
+			: this(type)
+		{
+			this.properties["Severity"] = severity.ToString();
+			this.properties["Description"] = description;
+		}
+
 		#region IScanItem Members
 
 		public string Type {

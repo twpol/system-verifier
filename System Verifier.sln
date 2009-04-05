@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsSearch", "WindowsSea
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "COM Checker", "COM Checker\COM Checker.vcproj", "{075C0B7B-D6D5-48B6-A7C2-62E71654091A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsAssociations", "WindowsAssociations\WindowsAssociations.csproj", "{FB083216-A7F0-4883-9151-D36D52CF11FA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,6 +58,14 @@ Global
 		{075C0B7B-D6D5-48B6-A7C2-62E71654091A}.Release|Win32.Build.0 = Release|Win32
 		{075C0B7B-D6D5-48B6-A7C2-62E71654091A}.Release|Win64.ActiveCfg = Release|x64
 		{075C0B7B-D6D5-48B6-A7C2-62E71654091A}.Release|Win64.Build.0 = Release|x64
+		{FB083216-A7F0-4883-9151-D36D52CF11FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB083216-A7F0-4883-9151-D36D52CF11FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB083216-A7F0-4883-9151-D36D52CF11FA}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{FB083216-A7F0-4883-9151-D36D52CF11FA}.Debug|Win64.ActiveCfg = Debug|Any CPU
+		{FB083216-A7F0-4883-9151-D36D52CF11FA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB083216-A7F0-4883-9151-D36D52CF11FA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB083216-A7F0-4883-9151-D36D52CF11FA}.Release|Win32.ActiveCfg = Release|Any CPU
+		{FB083216-A7F0-4883-9151-D36D52CF11FA}.Release|Win64.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

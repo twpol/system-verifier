@@ -190,9 +190,6 @@ namespace JGR.SystemVerifier
 			lstResults.Items.Clear();
 			lblResultsName.Text = "";
 			lblResultsDescription.Text = "";
-            foreach (DisplayItemSeverity sev in Enum.GetValues(typeof(DisplayItemSeverity))) {
-                lstResults.Items.Add(new ListViewItem(new string[] { "Test", sev.ToString(), sev.ToString() }, (int)sev));
-            }
 
 			scanner = new Scanner();
 			scanner.OnProgress += new Scanner.ProgressEventHandler(scanner_Progress);
