@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using JGR.SystemVerifier.Plugins;
@@ -52,12 +53,11 @@ namespace JGR.SystemVerifier.Core
 			displays.Add(new DefaultDisplay());
 
 			// Step 3: Set up initial progress values.
-			// Add 1 to the maximum returned from each scanner so we can do
-			// a final step for each, and in case the scanner really doesn't
-			// know how many steps it'll take yet.
 			long maximum = 0;
 			foreach (IScanner scanner in scanners) {
 				scanner.PreProcess();
+				Debug.Assert(scanner.Current == 0, scanner + ".Current is not 0! (current = " + scanner.Current + ")");
+				Debug.Assert(scanner.Maximum >= 0, scanner + ".Maximum is less than 0! (maximum = " + scanner.Maximum + ")");
 				maximum += scanner.Maximum;
 			}
 
@@ -66,13 +66,13 @@ namespace JGR.SystemVerifier.Core
 
 			foreach (IScanner scanner in scanners) {
 				while (scanner.Current < scanner.Maximum) {
-					//OnOutput(this, new OutputEventArgs(new DisplayItem(DisplayItemSeverity.Verbose, "Process Before", "Current: " + current + "  Maximum: " + maximum)));
-					maximum -= scanner.Maximum;
-					current -= scanner.Current;
+					var oldScannerMaximum = scanner.Maximum;
+					var oldScannerCurrent = scanner.Current;
 					List<IScanItem> items = scanner.Process();
-					maximum += scanner.Maximum;
-					current += scanner.Current;
-					//OnOutput(this, new OutputEventArgs(new DisplayItem(DisplayItemSeverity.Verbose, "Process After", "Current: " + current + "  Maximum: " + maximum)));
+					Debug.Assert(scanner.Current >= oldScannerCurrent, scanner + ".Current decreased! (old = " + oldScannerCurrent + ", new = " + scanner.Current + ")");
+					Debug.Assert(scanner.Current <= scanner.Maximum, scanner + ".Current > Maximum! (current = " + scanner.Current + ", maximum = " + scanner.Maximum + ")");
+					maximum += scanner.Maximum - oldScannerMaximum;
+					current += scanner.Current - oldScannerCurrent;
 
 					// Process each scan item into a display item using the first display
 					// module which accepts it.

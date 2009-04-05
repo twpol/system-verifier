@@ -28,13 +28,13 @@ namespace JGR.SystemVerifier
             this.components = new System.ComponentModel.Container();
             System.Windows.Forms.Label label1;
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(VerifierGUI));
-            this.lblPluginAuthors = new System.Windows.Forms.Label();
             this.btnClose = new System.Windows.Forms.Button();
             this.btnStart = new System.Windows.Forms.Button();
             this.proStatus = new System.Windows.Forms.ProgressBar();
             this.tabs = new System.Windows.Forms.TabControl();
             this.tabConfig = new System.Windows.Forms.TabPage();
-            this.grpPlugin = new System.Windows.Forms.GroupBox();
+            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
+            this.lblPluginAuthors = new System.Windows.Forms.Label();
             this.lblPluginName = new System.Windows.Forms.Label();
             this.lblPluginDesc = new System.Windows.Forms.Label();
             this.trePlugins = new System.Windows.Forms.TreeView();
@@ -51,27 +51,18 @@ namespace JGR.SystemVerifier
             label1 = new System.Windows.Forms.Label();
             this.tabs.SuspendLayout();
             this.tabConfig.SuspendLayout();
+            this.tableLayoutPanel1.SuspendLayout();
             this.tabResults.SuspendLayout();
             this.SuspendLayout();
             // 
             // label1
             // 
-            label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             label1.AutoSize = true;
-            label1.Location = new System.Drawing.Point(319, 58);
+            label1.Location = new System.Drawing.Point(3, 26);
             label1.Name = "label1";
             label1.Size = new System.Drawing.Size(22, 13);
-            label1.TabIndex = 1;
+            label1.TabIndex = 5;
             label1.Text = "By:";
-            // 
-            // lblPluginAuthors
-            // 
-            this.lblPluginAuthors.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblPluginAuthors.Location = new System.Drawing.Point(347, 58);
-            this.lblPluginAuthors.Name = "lblPluginAuthors";
-            this.lblPluginAuthors.Size = new System.Drawing.Size(199, 26);
-            this.lblPluginAuthors.TabIndex = 2;
-            this.lblPluginAuthors.Text = "<no plugin selected>";
             // 
             // btnClose
             // 
@@ -121,11 +112,7 @@ namespace JGR.SystemVerifier
             // 
             // tabConfig
             // 
-            this.tabConfig.Controls.Add(this.grpPlugin);
-            this.tabConfig.Controls.Add(label1);
-            this.tabConfig.Controls.Add(this.lblPluginAuthors);
-            this.tabConfig.Controls.Add(this.lblPluginName);
-            this.tabConfig.Controls.Add(this.lblPluginDesc);
+            this.tabConfig.Controls.Add(this.tableLayoutPanel1);
             this.tabConfig.Controls.Add(this.trePlugins);
             this.tabConfig.Location = new System.Drawing.Point(4, 22);
             this.tabConfig.Name = "tabConfig";
@@ -135,34 +122,58 @@ namespace JGR.SystemVerifier
             this.tabConfig.Text = "Configuration";
             this.tabConfig.UseVisualStyleBackColor = true;
             // 
-            // grpPlugin
+            // tableLayoutPanel1
             // 
-            this.grpPlugin.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            this.tableLayoutPanel1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.grpPlugin.Location = new System.Drawing.Point(322, 87);
-            this.grpPlugin.Name = "grpPlugin";
-            this.grpPlugin.Size = new System.Drawing.Size(224, 192);
-            this.grpPlugin.TabIndex = 3;
-            this.grpPlugin.TabStop = false;
-            this.grpPlugin.Text = "Plugin Options";
+            this.tableLayoutPanel1.ColumnCount = 2;
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel1.Controls.Add(this.lblPluginAuthors, 0, 2);
+            this.tableLayoutPanel1.Controls.Add(this.lblPluginName, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.lblPluginDesc, 0, 1);
+            this.tableLayoutPanel1.Controls.Add(label1, 0, 2);
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(316, 6);
+            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
+            this.tableLayoutPanel1.RowCount = 4;
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(230, 273);
+            this.tableLayoutPanel1.TabIndex = 4;
+            // 
+            // lblPluginAuthors
+            // 
+            this.lblPluginAuthors.AutoSize = true;
+            this.lblPluginAuthors.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblPluginAuthors.Location = new System.Drawing.Point(31, 26);
+            this.lblPluginAuthors.Name = "lblPluginAuthors";
+            this.lblPluginAuthors.Size = new System.Drawing.Size(196, 13);
+            this.lblPluginAuthors.TabIndex = 6;
+            this.lblPluginAuthors.Text = "<no plugin selected>";
             // 
             // lblPluginName
             // 
-            this.lblPluginName.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblPluginName.AutoSize = true;
+            this.tableLayoutPanel1.SetColumnSpan(this.lblPluginName, 2);
+            this.lblPluginName.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lblPluginName.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblPluginName.Location = new System.Drawing.Point(319, 6);
+            this.lblPluginName.Location = new System.Drawing.Point(3, 0);
             this.lblPluginName.Name = "lblPluginName";
-            this.lblPluginName.Size = new System.Drawing.Size(227, 13);
-            this.lblPluginName.TabIndex = 2;
+            this.lblPluginName.Size = new System.Drawing.Size(224, 13);
+            this.lblPluginName.TabIndex = 3;
             this.lblPluginName.Text = "<no plugin selected>";
             // 
             // lblPluginDesc
             // 
-            this.lblPluginDesc.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.lblPluginDesc.Location = new System.Drawing.Point(319, 19);
+            this.lblPluginDesc.AutoSize = true;
+            this.tableLayoutPanel1.SetColumnSpan(this.lblPluginDesc, 2);
+            this.lblPluginDesc.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblPluginDesc.Location = new System.Drawing.Point(3, 13);
             this.lblPluginDesc.Name = "lblPluginDesc";
-            this.lblPluginDesc.Size = new System.Drawing.Size(227, 39);
-            this.lblPluginDesc.TabIndex = 0;
+            this.lblPluginDesc.Size = new System.Drawing.Size(224, 13);
+            this.lblPluginDesc.TabIndex = 4;
             this.lblPluginDesc.Text = "<no plugin selected>";
             // 
             // trePlugins
@@ -177,7 +188,7 @@ namespace JGR.SystemVerifier
             this.trePlugins.ShowLines = false;
             this.trePlugins.ShowPlusMinus = false;
             this.trePlugins.ShowRootLines = false;
-            this.trePlugins.Size = new System.Drawing.Size(307, 273);
+            this.trePlugins.Size = new System.Drawing.Size(304, 273);
             this.trePlugins.TabIndex = 0;
             this.trePlugins.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.trePlugins_AfterCheck);
             this.trePlugins.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.trePlugins_AfterSelect);
@@ -304,7 +315,8 @@ namespace JGR.SystemVerifier
             this.Load += new System.EventHandler(this.VerifierGUI_Load);
             this.tabs.ResumeLayout(false);
             this.tabConfig.ResumeLayout(false);
-            this.tabConfig.PerformLayout();
+            this.tableLayoutPanel1.ResumeLayout(false);
+            this.tableLayoutPanel1.PerformLayout();
             this.tabResults.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -326,12 +338,12 @@ namespace JGR.SystemVerifier
 		private System.Windows.Forms.Label lblResultsName;
 		private System.Windows.Forms.ImageList imlResults;
 		private System.Windows.Forms.ImageList imlPlugins;
-		private System.Windows.Forms.Label lblStatus;
-		private System.Windows.Forms.Label lblPluginDesc;
-		private System.Windows.Forms.Label lblPluginAuthors;
-		private System.Windows.Forms.Label lblPluginName;
-		private System.Windows.Forms.GroupBox grpPlugin;
+        private System.Windows.Forms.Label lblStatus;
 		private System.Windows.Forms.TreeView trePlugins;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
+        private System.Windows.Forms.Label lblPluginAuthors;
+        private System.Windows.Forms.Label lblPluginName;
+        private System.Windows.Forms.Label lblPluginDesc;
 	}
 }
 

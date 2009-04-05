@@ -16,7 +16,7 @@ namespace WindowsSearch
 		}
 
 		public string Description {
-			get { return "Validates registration for protocol handlers, persistent handlers and filters."; }
+			get { return "Validates registration for Windows Search protocol handlers, persistent handlers and filters."; }
 		}
 
 		public string[] Authors {
@@ -174,35 +174,36 @@ namespace WindowsSearch
 
             foreach (int bitness in bitnessList) {
                 Dictionary<string, uint> verify = host.VerifyCOMClassID(classID, interfaces, bitness);
-                if (verify["_exitcode"] != 0) {
-                    IScanItem item = new DefaultScanItem(extension);
-                    item.Properties["Severity"] = "Critical";
-                    item.Properties["Description"] = "There was an unexpected error checking filter class " + FormatClassID(classID) + ". Error code: " + verify["_exitcode"].ToString("x");
-                    rv.Add(item);
-                } else {
-                    foreach (string intf in interfaces) {
-                        if (!verify.ContainsKey(intf)) {
-                            IScanItem item = new DefaultScanItem(extension);
-                            item.Properties["Severity"] = "Critical";
-                            item.Properties["Description"] = "There was an unexpected error checking filter class " + FormatClassID(classID) + " for interface " + FormatClassID(intf) + " for " + bitness + "bit applications.";
-                            rv.Add(item);
-                        } else if (verify[intf] != 0) {
-                            IScanItem item = new DefaultScanItem(extension);
-                            item.Properties["Severity"] = "Error";
-                            item.Properties["Description"] = "Filter class " + FormatClassID(classID) + " is not correctly registered for " + bitness + "bit applications. Error code for " + FormatClassID(intf) + ": " + verify[intf].ToString("x");
-                            if (verify[intf] == 0x80070057) {
-                                item.Properties["Description"] += " (E_INVALIDARG)";
-                            } else if (verify[intf] == 0x80004002) {
-                                item.Properties["Description"] += " (E_NOINTERFACE)";
-                            } else if (verify[intf] == 0x80040154) {
-                                item.Properties["Description"] += " (REGDB_E_CLASSNOTREG)";
-                            } else if (verify[intf] == 0x80040155) {
-                                item.Properties["Description"] += " (REGDB_E_IIDNOTREG)";
-                            }
-                            rv.Add(item);
-                        }
-                    }
-                }
+				if (verify["_exitcode"] != 0) {
+					IScanItem item = new DefaultScanItem(extension);
+					item.Properties["Severity"] = "Critical";
+					item.Properties["Description"] = "There was an unexpected error checking filter class " + FormatClassID(classID) + ". Error code: " + verify["_exitcode"].ToString("x");
+					rv.Add(item);
+				} else if (verify[classID] == 0x80040154) {
+					IScanItem item = new DefaultScanItem(extension);
+					item.Properties["Severity"] = "Error";
+					item.Properties["Description"] = "Filter class " + FormatClassID(classID) + " is not registered for " + bitness + "bit applications.";
+					rv.Add(item);
+				} else if (verify[classID] != 0) {
+					IScanItem item = new DefaultScanItem(extension);
+					item.Properties["Severity"] = "Error";
+					item.Properties["Description"] = "Filter class " + FormatClassID(classID) + " is not correctly registered for " + bitness + "bit applications. Error code: " + FormatHResult(verify[classID]);
+					rv.Add(item);
+				} else {
+					foreach (string intf in interfaces) {
+						if (!verify.ContainsKey(intf)) {
+							IScanItem item = new DefaultScanItem(extension);
+							item.Properties["Severity"] = "Critical";
+							item.Properties["Description"] = "There was an unexpected error checking filter class " + FormatClassID(classID) + " for interface " + FormatClassID(intf) + " for " + bitness + "bit applications.";
+							rv.Add(item);
+						} else if (verify[intf] != 0) {
+							IScanItem item = new DefaultScanItem(extension);
+							item.Properties["Severity"] = "Error";
+							item.Properties["Description"] = "Filter class " + FormatClassID(classID) + " is not correctly registered for " + bitness + "bit applications. Error code for " + FormatClassID(intf) + ": " + FormatHResult(verify[intf]);
+							rv.Add(item);
+						}
+					}
+				}
             }
 
             return rv;
