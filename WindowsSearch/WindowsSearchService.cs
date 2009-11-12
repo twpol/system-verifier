@@ -112,8 +112,11 @@ namespace WindowsSearch
 			while (true) {
 				{
 					string persistHandler = GetPersistentHandler(extension);
+					if (persistHandler.Length > 0) {
+						rv.AddRange(VerifyPersistentHandlerClassID(extension, persistHandler));
+					}
 					string iFilterClass = GetIFilterFromPersistentHandler(persistHandler);
-					if (iFilterClass != "") {
+					if (iFilterClass.Length > 0) {
 						rv.AddRange(VerifyFilterClassID(extension, iFilterClass));
 						break;
 					}
@@ -122,8 +125,11 @@ namespace WindowsSearch
 					string contentType = GetValueFromKey(@"SOFTWARE\Classes\" + extension, "Content Type");
 					string classID = GetValueFromKey(@"SOFTWARE\Classes\MIME\Database\Content Type\" + contentType, "CLSID");
 					string persistHandler = GetPersistentHandler(classID);
+					if (persistHandler.Length > 0) {
+						rv.AddRange(VerifyPersistentHandlerClassID(extension, persistHandler));
+					}
 					string iFilterClass = GetIFilterFromPersistentHandler(persistHandler);
-					if (iFilterClass != "") {
+					if (iFilterClass.Length > 0) {
 						rv.AddRange(VerifyFilterClassID(extension, iFilterClass));
 						break;
 					}
@@ -132,8 +138,11 @@ namespace WindowsSearch
 					string handlerName = GetDefaultValueFromKey(@"SOFTWARE\Classes\" + extension);
 					string classID = GetDefaultValueFromKey(@"SOFTWARE\Classes\" + handlerName + @"\CLSID");
 					string persistHandler = GetPersistentHandler(classID);
+					if (persistHandler.Length > 0) {
+						rv.AddRange(VerifyPersistentHandlerClassID(extension, persistHandler));
+					}
 					string iFilterClass = GetIFilterFromPersistentHandler(persistHandler);
-					if (iFilterClass != "") {
+					if (iFilterClass.Length > 0) {
 						rv.AddRange(VerifyFilterClassID(extension, iFilterClass));
 						break;
 					}
@@ -163,6 +172,19 @@ namespace WindowsSearch
 					rv.AddRange(VerifyPropertyClassID(extension, propertyHandler32, 32));
 				}
 			}
+		}
+
+		List<IScanItem> VerifyPersistentHandlerClassID(string extension, string classID) {
+			List<IScanItem> rv = new List<IScanItem>();
+
+			 if (GetDefaultValueFromKey(@"SOFTWARE\Classes\CLSID\" + classID).Length == 0) {
+				IScanItem item = new DefaultScanItem(extension);
+				item.Properties["Severity"] = "Error";
+				item.Properties["Description"] = "Persistent handler class " + FormatClassID(classID) + " is not registered for " + host.Bitness + "bit applications.";
+				rv.Add(item);
+			}
+
+			return rv;
 		}
 
         List<IScanItem> VerifyFilterClassID(string extension, string classID) {
@@ -212,14 +234,7 @@ namespace WindowsSearch
         List<IScanItem> VerifyPropertyClassID(string extension, string classID, long bitness) {
             Dictionary<string, string> interfaces = new Dictionary<string, string>();
             interfaces.Add("IPropertyStore", "{886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99}"); // Windows Vista
-            //interfaces.Add("IPropertyStoreCapabilities", "{C8E2D566-186E-4D49-BF41-6909EAD56ACC}"); // Windows Vista
-            //interfaces.Add("IFilter", "{851E9802-B338-4AB3-BB6B-6AA57CC699D0}");
-            //interfaces.Add("IPropertyStorage", "{00000138-0000-0000-C000-000000000046}");
             //interfaces.Add("IShellExtInit", "{000214E8-0000-0000-C000-000000000046}"); // Windows XP
-            //interfaces.Add("IPersistStream", "{00000109-0000-0000-C000-000000000046}");
-            //interfaces.Add("IPersistStorage", "{0000010A-0000-0000-C000-000000000046}");
-            //interfaces.Add("IPersistFile", "{0000010B-0000-0000-C000-000000000046}");
-            //interfaces.Add("IInitializeWithFileXXX", "{3B362301-E0F3-4049-B0BD-F34F7D3BB9AA}"); // Windows Vista
             interfaces.Add("IInitializeWithFile", "{B7D14566-0509-4CCE-A71F-0A554233BD9B}"); // Windows Vista
             interfaces.Add("IInitializeWithItem", "{7F73BE3F-FB79-493C-A6C7-7EE14E245841}"); // Windows Vista
             interfaces.Add("IInitializeWithStream", "{B824B49D-22AC-4161-AC8A-9916E8FA3F7F}"); // Windows Vista
@@ -293,7 +308,7 @@ namespace WindowsSearch
                 if (!initOK) {
                     IScanItem item = new DefaultScanItem(extension);
                     item.Properties["Severity"] = "Error";
-                    item.Properties["Description"] = "Property handler class " + FormatClassID(classID) + " does not implement 'IShellExtInit', 'IInitializeWithFile', 'IInitializeWithItem' or 'IInitializeWithStream' for " + bitness + "bit applications.";
+                    item.Properties["Description"] = "Property handler class " + FormatClassID(classID) + " does not implement 'IInitializeWithFile', 'IInitializeWithItem' or 'IInitializeWithStream' for " + bitness + "bit applications.";
                     rv.Add(item);
                 }
             }
