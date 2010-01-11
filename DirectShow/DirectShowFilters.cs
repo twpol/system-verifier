@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.Win32;
 using JGR.SystemVerifier.Plugins;
+using System.IO;
 
-namespace DirectShow
-{
-	public class DirectShowFilters : IPlugin, IPluginWithHost, IPluginWithSections, IScanner, IDisplay
-	{
+namespace DirectShow {
+	public class DirectShowFilters : IPlugin, IPluginWithHost, IPluginWithSections, IScanner, IDisplay {
 		#region IPlugin Members
 
 		public string Name {
@@ -42,7 +41,7 @@ namespace DirectShow
 
 		public List<KeyValuePair<string, long>> Sections {
 			get {
-				List<KeyValuePair<string, long>> rv = new List<KeyValuePair<string,long >>();
+				List<KeyValuePair<string, long>> rv = new List<KeyValuePair<string, long>>();
 				rv.Add(new KeyValuePair<string, long>(@"Extension Registration", (long)SectionsEnum.ExtensionRegistration));
 				return rv;
 			}
@@ -59,7 +58,8 @@ namespace DirectShow
 
 		private long current = 0;
 		private long maximum = 0;
-		private Queue<DirectShowExtension> extensions;
+		private Queue<DirectShowAction> actions;
+		private Dictionary<long, string> prefixes;
 
 		public long Current {
 			get {
@@ -74,62 +74,171 @@ namespace DirectShow
 		}
 
 		public void PreProcess() {
-			extensions = new Queue<DirectShowExtension>();
+			actions = new Queue<DirectShowAction>();
 
-			if (sectionsEnabled[(long)SectionsEnum.ExtensionRegistration]) {
-				using (RegistryKey key = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(@"Media Type\Extensions")) {
-					foreach (string extensionName in key.GetSubKeyNames()) {
-						using (RegistryKey extensionKey = key.OpenSubKey(extensionName)) {
-							object sourceFilter = extensionKey.GetValue("Source Filter", null);
-							if (sourceFilter != null) {
-								extensions.Enqueue(new DirectShowExtension(extensionName, sourceFilter.ToString()));
+			prefixes = new Dictionary<long, string>();
+			prefixes.Add(host.Bitness, "");
+			if (host.Bitness > 32) {
+				prefixes.Add(32, @"Wow6432Node\");
+			}
+
+			foreach (var prefix in prefixes) {
+				// File Extension -> Source Filter registrations
+				if (sectionsEnabled[(long)SectionsEnum.ExtensionRegistration]) {
+					using (var key = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(prefix.Value + @"Media Type\Extensions")) {
+						foreach (var extensionName in key.GetSubKeyNames()) {
+							using (var extensionKey = key.OpenSubKey(extensionName)) {
+								var sourceFilter = extensionKey.GetValue("Source Filter", null);
+								if (sourceFilter != null) {
+									actions.Enqueue(new DirectShowExtension(extensionName, sourceFilter.ToString()));
+								}
 							}
 						}
 					}
 				}
+				// DirectShow Filters
+				using (var catKey = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(prefix.Value + @"CLSID\{DA4E3DA0-D07D-11d0-BD50-00A0C911CE86}\Instance")) {
+					foreach (var category in catKey.GetSubKeyNames()) {
+						using (var catSubKey = catKey.OpenSubKey(category)) {
+							var catName = catSubKey.GetValue("FriendlyName", null);
+							var catClassId = catSubKey.GetValue("CLSID", null);
+							using (var key = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(prefix.Value + @"CLSID\" + category + @"\Instance")) {
+								if (key != null) {
+									foreach (var extensionName in key.GetSubKeyNames()) {
+										using (var extensionKey = key.OpenSubKey(extensionName)) {
+											var name = extensionKey.GetValue("FriendlyName", null);
+											var classId = extensionKey.GetValue("CLSID", null);
+											if (classId != null) {
+												actions.Enqueue(new DirectShowCategoryCodec(catName == null ? catClassId.ToString() : catName.ToString(), catClassId.ToString(), name == null ? classId.ToString() : name.ToString(), classId.ToString()));
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+				// Direct Show media categories
+				using (var catKey = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(prefix.Value + @"DirectShow\MediaObjects\Categories")) {
+					foreach (var category in catKey.GetSubKeyNames()) {
+						using (var catSubKey = catKey.OpenSubKey(category)) {
+							var catName = catSubKey.GetValue(null, null);
+							foreach (var classid in catSubKey.GetSubKeyNames()) {
+								using (var objKey = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(prefix.Value + @"DirectShow\MediaObjects\" + classid)) {
+									if (objKey != null) {
+										var name = objKey.GetValue(null, null);
+										actions.Enqueue(new DirectShowCategoryCodec(catName.ToString(), "{" + category + "}", name.ToString(), "{" + classid + "}"));
+									}
+								}
+							}
+						}
+					}
+				}
+				// Direct Show preferred filters
+				using (var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\" + prefix.Value + @"Microsoft\DirectShow\Preferred")) {
+					foreach (var name in key.GetValueNames()) {
+						var classId = key.GetValue(name, null);
+						if (classId != null) {
+							actions.Enqueue(new DirectShowPreferredCodec(name, classId.ToString()));
+						}
+					}
+				}
+				// Media Foundation preferred sources
+				using (var key = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(prefix.Value + @"MediaFoundation\MediaSources\Preferred")) {
+					foreach (var name in key.GetValueNames()) {
+						var classId = key.GetValue(name, null);
+						if (classId != null) {
+							actions.Enqueue(new DirectShowPreferredCodec(name, classId.ToString()));
+						}
+					}
+				}
+				// Media Foundation preferred transformations
+				//using (var key = Microsoft.Win32.Registry.ClassesRoot.OpenSubKey(prefix.Value + @"MediaFoundation\Transforms\Preferred")) {
+				//    foreach (var name in key.GetValueNames()) {
+				//        var classId = key.GetValue(name, null);
+				//        if (classId != null) {
+				//            actions.Enqueue(new DirectShowPreferrerCodec(name, classId.ToString()));
+				//        }
+				//    }
+				//}
 			}
 
-			maximum = extensions.Count;
+			maximum = actions.Count;
 			current = 0;
 		}
 
 		public List<IScanItem> Process() {
-			List<IScanItem> rv = new List<IScanItem>();
-			DirectShowExtension extension = extensions.Dequeue();
+			var rv = new List<IScanItem>();
+			var action = actions.Dequeue();
+			var extension = action as DirectShowExtension;
+			var codec = action as DirectShowCodec;
 			DefaultScanItem item;
 			current++;
 
-			if (extension.Extension.StartsWith(".")) {
-				using (RegistryKey key = Microsoft.Win32.Registry.ClassesRoot) {
-					using (RegistryKey filterKey = key.OpenSubKey(@"CLSID\" + extension.SourceFilter)) {
-						if (filterKey == null) {
-							item = new DefaultScanItem("DirectShowFilter");
-							item.Properties["Extension"] = extension.Extension;
-							item.Properties["ClassID"] = extension.SourceFilter;
-							item.Properties["Bitness"] = host.Bitness + "bit";
-							item.Properties["ItemIssue"] = "Unregistered";
-							rv.Add(item);
+			if (extension != null) {
+				if (extension.Extension.StartsWith(".")) {
+					using (var key = Microsoft.Win32.Registry.ClassesRoot) {
+						foreach (var prefix in prefixes) {
+							using (var filterKey = key.OpenSubKey(prefix.Value + @"CLSID\" + extension.SourceFilter)) {
+								if (filterKey == null) {
+									item = new DefaultScanItem("DirectShowFileExtension");
+									item.Properties["Extension"] = extension.Extension;
+									item.Properties["ClassID"] = extension.SourceFilter;
+									item.Properties["Bitness"] = prefix.Key + "bit";
+									item.Properties["ItemIssue"] = "Unregistered";
+									rv.Add(item);
+								}
+							}
 						}
 					}
-					if (host.Bitness > 32) {
-						using (RegistryKey filterKey = key.OpenSubKey(@"Wow6432Node\CLSID\" + extension.SourceFilter)) {
+				} else {
+					item = new DefaultScanItem("DirectShowFileExtension");
+					item.Properties["Extension"] = extension.Extension;
+					item.Properties["ClassID"] = extension.SourceFilter;
+					item.Properties["ItemIssue"] = "ExtensionNoDot";
+					rv.Add(item);
+				}
+			}
+			if (codec != null) {
+				using (var key = Microsoft.Win32.Registry.ClassesRoot) {
+					foreach (var prefix in prefixes) {
+						using (var filterKey = key.OpenSubKey(prefix.Value + @"CLSID\" + codec.ClassId)) {
+							item = new DefaultScanItem("DirectShowFilter");
+							item.Properties["Name"] = codec.Name;
+							item.Properties["ClassID"] = codec.ClassId;
+							var categoryCodec = codec as DirectShowCategoryCodec;
+							if (categoryCodec != null) {
+								item.Properties["CategoryName"] = categoryCodec.CategoryName;
+								item.Properties["CategoryClassID"] = categoryCodec.CategoryClassId;
+							}
+							var preferredCodec = codec as DirectShowPreferredCodec;
+							if (preferredCodec != null) {
+								item.Properties["Type"] = preferredCodec.Type;
+							}
+							item.Properties["Bitness"] = prefix.Key + "bit";
+
 							if (filterKey == null) {
-								item = new DefaultScanItem("DirectShowFilter");
-								item.Properties["Extension"] = extension.Extension;
-								item.Properties["ClassID"] = extension.SourceFilter;
-								item.Properties["Bitness"] = "32bit";
 								item.Properties["ItemIssue"] = "Unregistered";
 								rv.Add(item);
+							} else {
+								using (var filterInprocKey = filterKey.OpenSubKey("InprocServer32")) {
+									var path = filterInprocKey.GetValue(null, null);
+									if (path == null) {
+										item.Properties["ItemIssue"] = "RegisteredWithoutServer";
+										rv.Add(item);
+										continue;
+									}
+									if (!File.Exists(path.ToString())) {
+										item.Properties["ItemIssue"] = "RegisteredServerNotOnDisk";
+										item.Properties["ItemPath"] = path.ToString();
+										rv.Add(item);
+										continue;
+									}
+								}
 							}
 						}
 					}
 				}
-			} else {
-				item = new DefaultScanItem("DirectShowFilter");
-				item.Properties["Extension"] = extension.Extension;
-				item.Properties["ClassID"] = extension.SourceFilter;
-				item.Properties["ItemIssue"] = "ExtensionNoDot";
-				rv.Add(item);
 			}
 
 			return rv;
@@ -142,7 +251,7 @@ namespace DirectShow
 		#region IDisplay Members
 
 		public bool Accepts(IScanItem item) {
-			return (item.Type == "DirectShowFilter");
+			return (item.Type == "DirectShowFileExtension") || (item.Type == "DirectShowFilter");
 		}
 
 		public IDisplayItem Process(IScanItem item) {
@@ -151,7 +260,7 @@ namespace DirectShow
 			string description = "";
 
 			switch (item.Type) {
-				case "DirectShowFilter":
+				case "DirectShowFileExtension":
 					switch ((string)item.Properties["ItemIssue"]) {
 						case "Unregistered":
 							severity = DisplayItemSeverity.Warning;
@@ -169,6 +278,29 @@ namespace DirectShow
 							break;
 					}
 					break;
+				case "DirectShowFilter":
+					var issue = "";
+					switch ((string)item.Properties["ItemIssue"]) {
+						case "Unregistered":
+							issue = "is not registered";
+							break;
+						case "RegisteredWithoutServer":
+							issue = "has no registered file path";
+							break;
+						case "RegisteredServerNotOnDisk":
+							issue = "uses non-existant file '" + item.Properties["ItemPath"] + "'";
+							break;
+					}
+					severity = DisplayItemSeverity.Warning;
+					name = "Missing Filter";
+					if (item.Properties.ContainsKey("CategoryName")) {
+						description = "The '" + item.Properties["CategoryName"] + "' instance '" + item.Properties["Name"] + "' " + issue + " for " + item.Properties["Bitness"] + " applications (" + item.Properties["CategoryClassID"] + "/" + item.Properties["ClassID"] + "). You may not be able to play some files in " + item.Properties["Bitness"] + " applications.";
+					} else if (item.Properties.ContainsKey("Type")) {
+						description = "The '" + item.Properties["Type"] + "' preferred filter '" + item.Properties["ClassID"] + "' " + issue + " for " + item.Properties["Bitness"] + " applications. You may not be able to play some files in " + item.Properties["Bitness"] + " applications.";
+					} else {
+						description = "The filter '" + item.Properties["Name"] + "' " + issue + " for " + item.Properties["Bitness"] + " applications (" + item.Properties["ClassID"] + "). You may not be able to play some files in " + item.Properties["Bitness"] + " applications.";
+					}
+					break;
 			}
 
 			return new DefaultDisplayItem(severity, name, description);
@@ -177,21 +309,46 @@ namespace DirectShow
 		#endregion
 	}
 
-	class DirectShowExtension
-	{
+	class DirectShowAction {
+	}
+
+	class DirectShowExtension : DirectShowAction {
+		public string Extension { get; private set; }
+		public string SourceFilter { get; private set; }
+
 		public DirectShowExtension(string extension, string sourceFilter) {
-			this.extension = extension;
-			this.sourceFilter = sourceFilter;
+			Extension = extension;
+			SourceFilter = sourceFilter;
 		}
+	}
 
-		private string extension;
-		public string Extension {
-			get { return extension; }
+	class DirectShowCodec : DirectShowAction {
+		public string Name { get; private set; }
+		public string ClassId { get; private set; }
+
+		public DirectShowCodec(string name, string classid) {
+			Name = name;
+			ClassId = classid;
 		}
+	}
 
-		private string sourceFilter;
-		public string SourceFilter {
-			get { return sourceFilter; }
+	class DirectShowCategoryCodec : DirectShowCodec {
+		public string CategoryName { get; private set; }
+		public string CategoryClassId { get; private set; }
+
+		public DirectShowCategoryCodec(string categoryName, string categoryClassId, string name, string classid)
+			: base(name, classid) {
+			CategoryName = categoryName;
+			CategoryClassId = categoryClassId;
+		}
+	}
+
+	class DirectShowPreferredCodec : DirectShowCodec {
+		public string Type { get; private set; }
+
+		public DirectShowPreferredCodec(string type, string classid)
+			: base("", classid) {
+			Type = type;
 		}
 	}
 }
