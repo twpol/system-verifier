@@ -1,5 +1,7 @@
-// COM Checker.cpp : Defines the entry point for the application.
-//
+//------------------------------------------------------------------------------
+// COM Checker, part of System Verifier (http://systemverifier.codeplex.com/).
+// License: New BSD License (BSD).
+//------------------------------------------------------------------------------
 
 #include "stdafx.h"
 #include "COM Checker.h"

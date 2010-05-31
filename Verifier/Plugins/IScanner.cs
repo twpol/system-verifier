@@ -1,3 +1,8 @@
+//------------------------------------------------------------------------------
+// System Verifier GUI, part of System Verifier (http://systemverifier.codeplex.com/).
+// License: New BSD License (BSD).
+//------------------------------------------------------------------------------
+
 using System;
 using System.Collections.Generic;
 
