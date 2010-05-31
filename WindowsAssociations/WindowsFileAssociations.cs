@@ -1,4 +1,9 @@
-﻿using System;
+﻿//------------------------------------------------------------------------------
+// Windows Associations plug-in, part of System Verifier (http://systemverifier.codeplex.com/).
+// License: New BSD License (BSD).
+//------------------------------------------------------------------------------
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.Win32;
