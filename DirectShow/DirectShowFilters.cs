@@ -186,21 +186,18 @@ namespace DirectShow {
 						foreach (var prefix in prefixes) {
 							using (var filterKey = key.OpenSubKey(prefix.Value + @"CLSID\" + extension.SourceFilter)) {
 								if (filterKey == null) {
-									item = new DefaultScanItem("DirectShowFileExtension");
-									item.Properties["Extension"] = extension.Extension;
-									item.Properties["ClassID"] = extension.SourceFilter;
-									item.Properties["Bitness"] = prefix.Key + "bit";
-									item.Properties["ItemIssue"] = "Unregistered";
+									item = new DefaultScanItem(extension.Extension);
+									item.Properties["Severity"] = "Warning";
+									item.Properties["Description"] = "Associated DirectShow source filter " + FormatClassID(extension.SourceFilter) + " is not registered for " + prefix.Key + "bit applications.";
 									rv.Add(item);
 								}
 							}
 						}
 					}
 				} else {
-					item = new DefaultScanItem("DirectShowFileExtension");
-					item.Properties["Extension"] = extension.Extension;
-					item.Properties["ClassID"] = extension.SourceFilter;
-					item.Properties["ItemIssue"] = "ExtensionNoDot";
+					item = new DefaultScanItem(extension.Extension);
+					item.Properties["Severity"] = "Warning";
+					item.Properties["Description"] = "Association with DirectShow source filter " + FormatClassID(extension.SourceFilter) + @" is incorrect. The registration at <HKCR\Media Type\Extensions> has no preceeding '.'.";
 					rv.Add(item);
 				}
 			}
@@ -256,7 +253,7 @@ namespace DirectShow {
 		#region IDisplay Members
 
 		public bool Accepts(IScanItem item) {
-			return (item.Type == "DirectShowFileExtension") || (item.Type == "DirectShowFilter");
+			return (item.Type == "DirectShowFilter");
 		}
 
 		public IDisplayItem Process(IScanItem item) {
@@ -265,24 +262,6 @@ namespace DirectShow {
 			string description = "";
 
 			switch (item.Type) {
-				case "DirectShowFileExtension":
-					switch ((string)item.Properties["ItemIssue"]) {
-						case "Unregistered":
-							severity = DisplayItemSeverity.Warning;
-							name = "Missing Filter";
-							if (item.Properties["Extension"] != null) {
-								description = "The DirectShow filter associated with '" + item.Properties["Extension"] + "' files is not registered for " + item.Properties["Bitness"] + " applications. Class ID '" + item.Properties["ClassID"] + "' is not registered. You may not be able to play '" + item.Properties["Extension"] + "' files in " + item.Properties["Bitness"] + " applications.";
-							} else {
-								description = "The DirectShow filter '" + item.Properties["ClassID"] + "' is not registered for " + item.Properties["Bitness"] + " applications.";
-							}
-							break;
-						case "ExtensionNoDot":
-							severity = DisplayItemSeverity.Warning;
-							name = "Registration";
-							description = "The DirectShow filter '" + item.Properties["ClassID"] + "' is incorrectly registered for '." + item.Properties["Extension"] + @"' files. The extension registration at <HKCR\Media Type\Extensions> has no preceeding '.'. You may not be able to play '." + item.Properties["Extension"] + "' files.";
-							break;
-					}
-					break;
 				case "DirectShowFilter":
 					var issue = "";
 					switch ((string)item.Properties["ItemIssue"]) {
@@ -297,18 +276,81 @@ namespace DirectShow {
 							break;
 					}
 					severity = DisplayItemSeverity.Warning;
-					name = "Missing Filter";
 					if (item.Properties.ContainsKey("CategoryName")) {
-						description = "The '" + item.Properties["CategoryName"] + "' instance '" + item.Properties["Name"] + "' " + issue + " for " + item.Properties["Bitness"] + " applications (" + item.Properties["CategoryClassID"] + "/" + item.Properties["ClassID"] + "). You may not be able to play some files in " + item.Properties["Bitness"] + " applications.";
+						name = (string)item.Properties["Name"];
+						description = "DirectShow '" + item.Properties["CategoryName"] + "' instance " + issue + " for " + item.Properties["Bitness"] + " applications (" + item.Properties["CategoryClassID"] + "/" + item.Properties["ClassID"] + "). You may not be able to play some files in " + item.Properties["Bitness"] + " applications.";
 					} else if (item.Properties.ContainsKey("Type")) {
-						description = "The '" + item.Properties["Type"] + "' preferred filter '" + item.Properties["ClassID"] + "' " + issue + " for " + item.Properties["Bitness"] + " applications. You may not be able to play some files in " + item.Properties["Bitness"] + " applications.";
+						name = (string)item.Properties["Type"];
+						description = "DirectShow preferred filter " + FormatClassID((string)item.Properties["ClassID"]) + " " + issue + " for " + item.Properties["Bitness"] + " applications. You may not be able to play some files in " + item.Properties["Bitness"] + " applications.";
 					} else {
-						description = "The filter '" + item.Properties["Name"] + "' " + issue + " for " + item.Properties["Bitness"] + " applications (" + item.Properties["ClassID"] + "). You may not be able to play some files in " + item.Properties["Bitness"] + " applications.";
+						name = (string)item.Properties["Name"];
+						description = "DirectShow filter " + issue + " for " + item.Properties["Bitness"] + " applications (" + FormatClassID((string)item.Properties["ClassID"]) + "). You may not be able to play some files in " + item.Properties["Bitness"] + " applications.";
 					}
 					break;
 			}
 
 			return new DefaultDisplayItem(severity, name, description);
+		}
+
+		string GetDefaultValueFromKey(string keyName) {
+			RegistryKey key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(keyName);
+			if (key == null) {
+				return "";
+			}
+			using (key) {
+				return "" + key.GetValue("");
+			}
+		}
+
+		string GetValueFromKey(string keyName, string valueName) {
+			RegistryKey key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(keyName);
+			if (key == null) {
+				return "";
+			}
+			using (key) {
+				return "" + key.GetValue(valueName);
+			}
+		}
+
+		string FormatClassID(string classID) {
+			string name = GetNameFromClassID(classID);
+			if (name == classID) {
+				return classID;
+			}
+			return "'" + name + "' " + classID;
+		}
+
+		string FormatHResult(uint result) {
+			if (result == 0x80070057) {
+				return result.ToString("x") + " (E_INVALIDARG)";
+			}
+			if (result == 0x80004002) {
+				return result.ToString("x") + " (E_NOINTERFACE)";
+			}
+			if (result == 0x80040154) {
+				return result.ToString("x") + " (REGDB_E_CLASSNOTREG)";
+			}
+			if (result == 0x80040155) {
+				return result.ToString("x") + " (REGDB_E_IIDNOTREG)";
+			}
+			return result.ToString("x");
+		}
+
+		string GetNameFromClassID(string classID) {
+			string name = GetDefaultValueFromKey(@"SOFTWARE\Classes\CLSID\" + classID);
+			if (name == "") {
+				name = GetDefaultValueFromKey(@"SOFTWARE\Classes\CLSID\" + classID + @"\InProcServer32");
+			}
+			if (name == "") {
+				name = GetDefaultValueFromKey(@"SOFTWARE\Classes\Interface\" + classID);
+			}
+			if (name == "") {
+				name = GetDefaultValueFromKey(@"SOFTWARE\Classes\Interface\" + classID + @"\InProcServer32");
+			}
+			if (name == "") {
+				return classID;
+			}
+			return name;
 		}
 
 		#endregion
